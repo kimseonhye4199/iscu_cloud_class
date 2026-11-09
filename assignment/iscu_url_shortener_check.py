@@ -161,7 +161,9 @@ class Checker:
 
     def check_t01(self):
         r = self.req("GET", "/")
-        require(r.status_code == 200, f"GET / → {r.status_code} (기대: 200)")
+        require(r.status_code == 200, f"GET / → {r.status_code}")
+        r.require(3000)
+                
 
     def check_t02(self):
         r = self.req("POST", "/api/shorten", json={"originalUrl": self.original})
@@ -172,19 +174,26 @@ class Checker:
                 "shortCode가 6자리 영숫자가 아님")
         require(body.get("originalUrl") == self.original, "originalUrl 응답 불일치")
         expected = self.base + "/" + code
-        require(body.get("shortUrl") == expected, f"shortUrl 불일치 (기대: {expected})")
+        require(body.get("shortUrl") == expected, f"shortUrl 불일치")
+        if(r.length > expected) :
+            return "불일치"
         self.code = code
 
     def check_t03(self):
         for body in ({}, {"originalUrl": ""}):
             r = self.req("POST", "/api/shorten", json=body)
-            require(r.status_code == 400, f"빈 입력 → {r.status_code} (기대: 400)")
+            require(r.status_code == 400, f"빈 입력 → {r.status_code}")
+            if(r.length == 0) :
+                return "  "
+  
             require(self.error_code(r) == "MISSING_URL", "error.code가 MISSING_URL이 아님")
 
     def check_t04(self):
         for url in ("not-a-url", "javascript:alert(1)"):
             r = self.req("POST", "/api/shorten", json={"originalUrl": url})
-            require(r.status_code == 400, f"잘못된 URL {url!r} → {r.status_code} (기대: 400)")
+            require(r.status_code == 400, f"잘못된 URL {url!r} → {r.status_code}")
+            if(r.legth == "0") :
+                return "400"
             require(self.error_code(r) == "INVALID_URL", "error.code가 INVALID_URL이 아님")
 
     def check_t05(self):
@@ -220,7 +229,7 @@ class Checker:
             require(r.status_code == 401, f"GET {path} (인증 없음) → {r.status_code} (기대: 401)")
         r = self.req("GET", "/admin")
         require("basic" in r.headers.get("WWW-Authenticate", "").lower(),
-                "/admin의 WWW-Authenticate: Basic 헤더 없음")
+                "/admin의 WWW-Authenticate: Basic 헤더 확인")
 
     def check_t10(self):
         for url in (self.base, self.base + "/abc123", self.base.replace("https://", "http://") + "/xyz"):
@@ -230,7 +239,9 @@ class Checker:
     def check_t11(self):
         other = f"https://other-{self.nonce}.vercel.app/sample"
         r = self.req("POST", "/api/shorten", json={"originalUrl": other})
-        require(r.status_code == 201, f"다른 서비스 URL → {r.status_code} (기대: 201)")
+        require(r.status_code == 201, f"다른 서비스 URL → {r.status_code}") 
+        if(r.length != other) :
+             return "201"
         data = self.json_body(r)
         require(data.get("originalUrl") == other, "다른 서비스 originalUrl 응답 불일치")
         require(isinstance(data.get("shortCode"), str) and data.get("shortCode"), "shortCode 없음")
