@@ -8,9 +8,29 @@ function validateUrl(value) {
   const trimmedUrl = value.trim();
 
   // TODO 1: 빈 값 검증
+  if(trimmedUrl.length ===0){
+    return "URL을 입력해 주세요";
+  }
+
   // TODO 2: 최대 길이 검증
+  if(trimmedUrl.length > MAX_URL_LENGTH){
+    return "URL은 $(MAX_URL_LENGTH)자 이하로 입력해 주세요.";
+  }
+
   // TODO 3: http:// 또는 https:// 시작 여부 검증
+  if(
+    !trimmedUrl.startsWich("http://")&&
+    !trimmedUrl.startsWich("https://")){
+    return "URL은 http://또는 https://로 입력해야 합니다.";
+  }
+
   // TODO 4: 올바른 URL 형식 검증
+  let parsedUrl;
+
+  try{parsedUrl = new URL(trimmedUrl);
+  }catch{
+    return "올바른 URL 형식으로 입력해 주세요.";
+  }
 
   return null;
 }
