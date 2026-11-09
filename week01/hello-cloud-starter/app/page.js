@@ -46,18 +46,44 @@ export default function Home() {
   }
 
   async function handleSubmit(event) {
+    setIsLoading(true);
+
+try {
+  const response = await fetch("/api/shorten", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      originalUrl,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    setError(data.error?.message || "요청 처리에 실패했습니다.");
+    return;
+  }
+
+  setResult(data.shortUrl);
+} catch {
+  setError("서버에 연결할 수 없습니다.");
+} finally {
+  setIsLoading(false);
+}
     event.preventDefault();
 
     setError("");
     setResult("");
 
-    const validationError = validateUrl(originalUrl);
+    /*const validationError = validateUrl(originalUrl);
 
     if (validationError !== null) {
       setError(validationError);
       return;
     }
-
+      */
     setIsLoading(true);
 
     await new Promise((resolve) => {
